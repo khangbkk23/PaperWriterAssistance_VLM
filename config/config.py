@@ -9,7 +9,7 @@ class Config:
             else:
                 setattr(self, key, value)
 
-def load_config(config_path="configs/config.yaml"):
+def load_config(config_path="./config/config.yaml"):
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     

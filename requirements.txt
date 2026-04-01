@@ -1,3 +1,5 @@
 pillow
 datasets
 peft
+bitsandbytes
+accelerate

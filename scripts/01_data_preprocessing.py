@@ -16,7 +16,7 @@ try:
 except ImportError:
     HAS_TRANSFORMERS = False
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from config.config import load_config
 
 
@@ -203,7 +203,7 @@ def write_jsonl(samples, path):
     with open(path, "w", encoding="utf-8") as f:
         for s in samples:
             f.write(json.dumps(s, ensure_ascii=False) + "\n")
-    print(f"  Saved {len(samples):,} records → {path}")
+    print(f" Saved {len(samples):,} records → {path}")
 
 
 def main():
@@ -212,7 +212,7 @@ def main():
     p.add_argument("--config", default="configs/config.yaml")
     args = p.parse_args()
 
-    cfg = load_config(args.config)
+    cfg = load_config()
 
     input_path  = cfg.data.raw_jsonl
     out_dir     = Path(cfg.data.processed_dir)

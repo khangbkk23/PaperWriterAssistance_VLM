@@ -17,7 +17,7 @@ data:
 
 training:
   output_dir: "checkpoints/qwen2vl-scientific-writer"
-  num_train_epochs: 2
+  num_train_epochs: 20
   per_device_train_batch_size: 1
   gradient_accumulation_steps: 16
   learning_rate: 0.0002
@@ -29,6 +29,8 @@ training:
   optim: "paged_adamw_8bit"
   auto_resume: false
   resume_from: null
+  early_stopping_patience: 5
+  early_stopping_min_delta: 0.001
 
 lora:
   r: 8
@@ -51,3 +53,12 @@ wandb:
   enabled: true
   project: "vlm-scientific-writer"
   run_name: null
+
+prediction:
+  checkpoint_path: "checkpoints/qwen2vl-scientific-writer/best"
+  use_merged: false
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true
+  output_json: "predictions/results.json"
