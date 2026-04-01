@@ -32,22 +32,22 @@ DOCVQA_PROMPTS = [
 ]
 
 ACADEMIC_SOURCES = [
-    ("scienceqa",           2000),
-    ("ai2d",                1500),
-    ("chartqa",             1500),
-    ("tqa",                 1000),
-    ("ocrvqa",              1000),
-    ("textvqa",             1000),
-    ("vqav2",               1000),
-    ("okvqa",               1000),
-    ("st_vqa",              1000),
-    ("infographic_vqa",      500),
-    ("docvqa",               500),
-    ("figureqa",             500),
-    ("dvqa",                 500),
-    ("plotqa",               500),
-    ("vistext",              500),
+    ("scienceqa",            2500),
+    ("ai2d",                 2000),
+    ("chartqa",              1500),
+    ("tqa",                  1500),
+    ("ocrvqa",               1500),
+    ("textvqa",              1000),
+    ("infographic_vqa",       500),
+    ("figureqa",              500),
+    ("dvqa",                  500),
+    ("plotqa",                500),
+    ("vistext",               500),
     ("diagram_image_to_text", 500),
+    ("screen2words",          500),
+    ("rendered_text",         500),
+    ("websight",              500),
+    ("datikz",                500),
 ]
 
 def resize_and_save_image(image, save_path):
@@ -84,7 +84,7 @@ def process_academic_vision():
         if total_count >= ARXIV_TARGET:
             break
 
-        print(f"\n  [{config_name}] target={config_target}...")
+        print(f"\n[{config_name}] target={config_target}...")
 
         try:
             dataset = load_dataset(
@@ -100,9 +100,16 @@ def process_academic_vision():
 
         config_count = 0
 
-        for item in dataset:
-            if total_count >= ARXIV_TARGET or config_count >= config_target:
+        item_iter = iter(dataset)
+        while total_count < ARXIV_TARGET and config_count < config_target:
+            try:
+                item = next(item_iter)
+            except StopIteration:
                 break
+            except Exception as e:
+                print(f"  [{config_name}] batch decode error, skipping: {type(e).__name__}")
+                continue
+
             try:
                 images = item.get("images", [])
                 texts = item.get("texts", [])

@@ -21,7 +21,9 @@ class Qwen2_5_VLEngine:
         print("Loading processor...")
         self.processor = AutoProcessor.from_pretrained(
             self.config.model.model_id,
-            trust_remote_code=True
+            trust_remote_code=True,
+            min_pixels=256 * 28 * 28,
+            max_pixels=512 * 28 * 28
         )
         
         bnb_config = BitsAndBytesConfig(
@@ -37,7 +39,7 @@ class Qwen2_5_VLEngine:
             quantization_config=bnb_config,
             device_map="auto",
             trust_remote_code=True,
-            torch_dtype=torch.float16
+            torch_dtype=torch.bfloat16
         )
         self.model.config.use_cache = False
 
@@ -45,8 +47,6 @@ class Qwen2_5_VLEngine:
             self.model,
             use_gradient_checkpointing=self.config.training.gradient_checkpointing
         )
-        
-        self.model.gradient_checkpointing_enable()
         self.model.enable_input_require_grads()
 
         print("Injecting LoRA...")
@@ -54,6 +54,7 @@ class Qwen2_5_VLEngine:
             r=self.config.lora.r,
             lora_alpha=self.config.lora.lora_alpha,
             target_modules=list(self.config.lora.target_modules),
+            modules_to_save=["lm_head"],
             lora_dropout=self.config.lora.lora_dropout,
             bias=self.config.lora.bias,
             task_type=self.config.lora.task_type
@@ -63,4 +64,32 @@ class Qwen2_5_VLEngine:
 
         self.model.print_trainable_parameters()
 
+        return self.processor, self.model
+    
+    def load_model_for_inference(self, checkpoint_path=None):
+        self.processor = AutoProcessor.from_pretrained(
+            self.config.model.model_id,
+            trust_remote_code=True,
+            min_pixels=256 * 28 * 28,
+            max_pixels=512 * 28 * 28
+        )
+        if checkpoint_path:
+            # Load LoRA adapter đã train
+            from peft import PeftModel
+            base_model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                self.config.model.model_id,
+                torch_dtype=torch.bfloat16,
+                device_map="auto",
+                trust_remote_code=True
+            )
+            self.model = PeftModel.from_pretrained(base_model, checkpoint_path)
+            self.model = self.model.merge_and_unload()  # merge LoRA vào base
+        else:
+            self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                self.config.model.model_id,
+                torch_dtype=torch.bfloat16,
+                device_map="auto",
+                trust_remote_code=True
+            )
+        self.model.eval()
         return self.processor, self.model
